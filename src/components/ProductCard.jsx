@@ -14,12 +14,12 @@ const ProductCard = ({ product }) => {
     <div className="product-card bg-white rounded-2xl border border-slate-100 shadow-card flex flex-col overflow-hidden group">
 
       {/* Image Area */}
-      <div className="relative bg-slate-50 border-b border-slate-100 overflow-hidden" style={{ paddingTop: '75%' }}>
-        <Link href={`/shop/${product.id}`}>
+      <div className="relative bg-white border-b border-slate-100 overflow-hidden flex items-center justify-center" style={{ paddingTop: '75%' }}>
+        <Link href={`/shop/${product.id}`} className="absolute inset-0 p-4 flex items-center justify-center">
           <img
             src={product.image || 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400'}
             alt={product.name}
-            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-500"
           />
         </Link>
 

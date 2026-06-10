@@ -32,7 +32,7 @@ const Footer = () => {
               ['Drug License', 'HR-GUR-2026-98765'],
               ['FSSAI License', '10826005001234'],
               ['GSTIN', '06AAAAA0000A1Z5'],
-              ['Pharmacist', 'Sahendra Yadav (B.Pharm)'],
+              ['Pharmacist', 'Harsh (B.Pharm)'],
             ].map(([k, v]) => (
               <div key={k} className="text-slate-400">{k}: <span className="text-slate-300 font-medium">{v}</span></div>
             ))}
@@ -105,12 +105,12 @@ const Footer = () => {
               <PhoneCall size={13} className="text-blue-400 flex-shrink-0" />
               <div>
                 <a href="tel:01244567890" className="hover:text-white block transition">0124-4567890</a>
-                <a href="tel:+919876543210" className="hover:text-white block transition">+91 98765 43210</a>
+                <a href="tel:+919341660370" className="hover:text-white block transition">+91 9341660370</a>
               </div>
             </li>
             <li className="flex items-center gap-2">
               <Mail size={13} className="text-blue-400 flex-shrink-0" />
-              <a href="mailto:support@paridhipharma.com" className="hover:text-white transition break-all">support@paridhipharma.com</a>
+              <a href="mailto:support@paridhipharma.com" className="hover:text-white transition break-all">[EMAIL_ADDRESS]</a>
             </li>
             <li className="flex items-center gap-2">
               <Clock size={13} className="text-blue-400 flex-shrink-0" />

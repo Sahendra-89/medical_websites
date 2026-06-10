@@ -9,18 +9,6 @@ import {
 } from 'lucide-react';
 import { getProducts, getCategories } from '../lib/api';
 import ProductCard from '../components/ProductCard';
-import TrustBadges from '../components/TrustBadges';
-
-const SERVICES = [
-  { icon: '💊', label: 'Order Medicines', href: '/shop?category=otc', bg: 'bg-blue-50', border: 'border-blue-100' },
-  { icon: '📋', label: 'Upload Rx', href: '/shop?category=prescription', bg: 'bg-amber-50', border: 'border-amber-100' },
-  { icon: '🩺', label: 'Medical Devices', href: '/shop?category=devices', bg: 'bg-sky-50', border: 'border-sky-100' },
-  { icon: '🌿', label: 'Wellness', href: '/shop?category=wellness', bg: 'bg-green-50', border: 'border-green-100' },
-  { icon: '👶', label: 'Baby Care', href: '/shop?category=baby-care', bg: 'bg-pink-50', border: 'border-pink-100' },
-  { icon: '🧴', label: 'Personal Care', href: '/shop?category=personal-care', bg: 'bg-purple-50', border: 'border-purple-100' },
-  { icon: '🏥', label: 'B2B Bulk', href: '/shop?b2b=true', bg: 'bg-slate-50', border: 'border-slate-100' },
-  { icon: '🔬', label: 'Lab Tests', href: '/shop', bg: 'bg-red-50', border: 'border-red-100' },
-];
 
 const REVIEWS = [
   { id: 1, user: 'Rajesh K.', loc: 'Gurgaon Sector 14', rating: 5, comment: 'Fast delivery and genuine products. Ordered BP monitor and monthly medicines — all arrived same day!', date: '2 days ago', verified: true },
@@ -146,26 +134,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── QUICK SERVICES ── */}
-      <section className="bg-white py-8 border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8">
-          <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 sm:gap-3">
-            {SERVICES.map((svc, i) => (
-              <Link key={i} href={svc.href} className="cat-pill group">
-                <div className={`cat-icon w-12 h-12 sm:w-14 sm:h-14 rounded-2xl text-xl sm:text-2xl flex items-center justify-center shadow-sm transition-all duration-200 group-hover:scale-110 group-hover:shadow-premium ${svc.bg} border ${svc.border}`}>
-                  {svc.icon}
-                </div>
-                <span className="cat-label text-[10px] sm:text-[11px] font-semibold text-slate-700 text-center leading-tight group-hover:text-medical-blue transition-colors">
-                  {svc.label}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── TRUST BADGES ── */}
-      <TrustBadges />
 
       {/* ── CATEGORIES ── */}
       <section className="py-14 bg-slate-50 border-b border-slate-100">

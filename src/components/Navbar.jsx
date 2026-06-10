@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { getCategories, getProducts } from '../lib/api';
 
 const OFFERS = [
   '🎉 Use code FLAT100 → ₹100 OFF on orders above ₹999',
@@ -20,111 +21,7 @@ const OFFERS = [
   '⭐ 5000+ Genuine Products | Licensed Pharmacy HR-GUR-2026-98765',
 ];
 
-// ── Healthcare mega-menu (PharmEasy-style)
-const SIDEBAR_CATEGORIES = [
-  'Must Haves',
-  'Vitamin Store',
-  'Personal Care',
-  'Sexual Wellness',
-  'Summer Store',
-  'Pet Care',
-  'Health Food & Drinks',
-  'Diabetes Essentials',
-  'Ayurvedic Care',
-  'Mother & Baby Care',
-  'Mobility & Elderly Care',
-  'Sports Nutrition',
-  'Devices & Monitors',
-  'Skin & Hair Care',
-];
 
-const HEALTHCARE_SUBMENU = {
-  'Must Haves': [
-    { title: 'Diabetic Care',          sub: 'All Diabetic Care',          href: '/shop?search=diabetic+care' },
-    { title: 'Feet Problem',           sub: 'All Feet Problem',           href: '/shop?search=feet+problem' },
-    { title: 'Skin & Hair Care',       sub: 'All Skin & Hair Care',       href: '/shop?search=skin+hair+care' },
-    { title: 'Never Seen Before Deals',sub: 'All Never Seen Before Deals',href: '/shop?offers=true' },
-    { title: 'Vitamin',                sub: 'All Vitamin',                href: '/shop?search=vitamin' },
-    { title: 'Ortho Care',             sub: 'All Ortho Care',             href: '/shop?search=ortho+care' },
-    { title: 'Therapy Others',         sub: 'All Therapy Others',         href: '/shop?search=therapy' },
-  ],
-  'Vitamin Store': [
-    { title: 'Vitamin D3',      sub: 'All Vitamin D3',      href: '/shop?search=vitamin+d3' },
-    { title: 'Vitamin C',       sub: 'All Vitamin C',       href: '/shop?search=vitamin+c' },
-    { title: 'Multivitamins',   sub: 'All Multivitamins',   href: '/shop?search=multivitamin' },
-    { title: 'Omega 3',         sub: 'All Omega 3',         href: '/shop?search=omega+3' },
-    { title: 'Calcium',         sub: 'All Calcium',         href: '/shop?search=calcium' },
-    { title: 'Iron Supplements',sub: 'All Iron Supplements',href: '/shop?search=iron+supplement' },
-  ],
-  'Personal Care': [
-    { title: 'Skin Care',        sub: 'All Skin Care',        href: '/shop?search=skin+care' },
-    { title: 'Hair Care',        sub: 'All Hair Care',        href: '/shop?search=hair+care' },
-    { title: 'Oral Care',        sub: 'All Oral Care',        href: '/shop?search=oral+care' },
-    { title: 'Eye Care',         sub: 'All Eye Care',         href: '/shop?search=eye+care' },
-    { title: 'Feminine Hygiene', sub: 'All Feminine Hygiene', href: '/shop?search=feminine' },
-    { title: 'Sun Care',         sub: 'All Sun Care',         href: '/shop?search=sun+care' },
-  ],
-  'Sexual Wellness': [
-    { title: 'Sexual Health',   sub: 'All Sexual Health',   href: '/shop?search=sexual+health' },
-    { title: 'Family Planning', sub: 'All Family Planning', href: '/shop?search=family+planning' },
-  ],
-  'Summer Store': [
-    { title: 'Sunscreen',       sub: 'All Sunscreen',       href: '/shop?search=sunscreen' },
-    { title: 'Hydration',       sub: 'All Hydration',       href: '/shop?search=hydration' },
-    { title: 'Cooling Products',sub: 'All Cooling Products',href: '/shop?search=cooling' },
-  ],
-  'Pet Care': [
-    { title: 'Pet Supplements', sub: 'All Pet Supplements', href: '/shop?search=pet+supplement' },
-    { title: 'Pet Hygiene',     sub: 'All Pet Hygiene',     href: '/shop?search=pet+hygiene' },
-  ],
-  'Health Food & Drinks': [
-    { title: 'Protein Powder',  sub: 'All Protein Powder',  href: '/shop?search=protein+powder' },
-    { title: 'Health Drinks',   sub: 'All Health Drinks',   href: '/shop?search=health+drinks' },
-    { title: 'Energy Bars',     sub: 'All Energy Bars',     href: '/shop?search=energy+bars' },
-    { title: 'Green Tea',       sub: 'All Green Tea',       href: '/shop?search=green+tea' },
-  ],
-  'Diabetes Essentials': [
-    { title: 'Glucometers',     sub: 'All Glucometers',     href: '/shop?search=glucometer' },
-    { title: 'Test Strips',     sub: 'All Test Strips',     href: '/shop?search=test+strips' },
-    { title: 'Insulin Syringes',sub: 'All Insulin Syringes',href: '/shop?search=insulin+syringe' },
-    { title: 'Diabetic Food',   sub: 'All Diabetic Food',   href: '/shop?search=diabetic+food' },
-  ],
-  'Ayurvedic Care': [
-    { title: 'Chyawanprash',    sub: 'All Chyawanprash',    href: '/shop?search=chyawanprash' },
-    { title: 'Ashwagandha',     sub: 'All Ashwagandha',     href: '/shop?search=ashwagandha' },
-    { title: 'Triphala',        sub: 'All Triphala',        href: '/shop?search=triphala' },
-    { title: 'Giloy',           sub: 'All Giloy',           href: '/shop?search=giloy' },
-  ],
-  'Mother & Baby Care': [
-    { title: 'Baby Nutrition',  sub: 'All Baby Nutrition',  href: '/shop?search=baby+nutrition' },
-    { title: 'Baby Hygiene',    sub: 'All Baby Hygiene',    href: '/shop?search=baby+hygiene' },
-    { title: 'Prenatal Care',   sub: 'All Prenatal Care',   href: '/shop?search=prenatal' },
-    { title: 'Baby Monitors',   sub: 'All Baby Monitors',   href: '/shop?search=baby+monitor' },
-  ],
-  'Mobility & Elderly Care': [
-    { title: 'Walking Aids',    sub: 'All Walking Aids',    href: '/shop?search=walking+aids' },
-    { title: 'Joint Support',   sub: 'All Joint Support',   href: '/shop?search=joint+support' },
-    { title: 'Pain Relief',     sub: 'All Pain Relief',     href: '/shop?search=pain+relief' },
-  ],
-  'Sports Nutrition': [
-    { title: 'Whey Protein',    sub: 'All Whey Protein',    href: '/shop?search=whey+protein' },
-    { title: 'BCAA',            sub: 'All BCAA',            href: '/shop?search=bcaa' },
-    { title: 'Pre-Workout',     sub: 'All Pre-Workout',     href: '/shop?search=pre+workout' },
-    { title: 'Creatine',        sub: 'All Creatine',        href: '/shop?search=creatine' },
-  ],
-  'Devices & Monitors': [
-    { title: 'BP Monitors',     sub: 'All BP Monitors',     href: '/shop?search=bp+monitor' },
-    { title: 'Pulse Oximeters', sub: 'All Pulse Oximeters', href: '/shop?search=pulse+oximeter' },
-    { title: 'Thermometers',    sub: 'All Thermometers',    href: '/shop?search=thermometer' },
-    { title: 'Nebulizers',      sub: 'All Nebulizers',      href: '/shop?search=nebulizer' },
-  ],
-  'Skin & Hair Care': [
-    { title: 'Moisturizers',    sub: 'All Moisturizers',    href: '/shop?search=moisturizer' },
-    { title: 'Serums',          sub: 'All Serums',          href: '/shop?search=serum' },
-    { title: 'Shampoos',        sub: 'All Shampoos',        href: '/shop?search=shampoo' },
-    { title: 'Hair Oils',       sub: 'All Hair Oils',       href: '/shop?search=hair+oil' },
-  ],
-};
 
 // ── Main category nav links (PharmEasy-style)
 const NAV_LINKS = [
@@ -141,7 +38,8 @@ const Navbar = () => {
   const [mobileMenu, setMobileMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
-  const [activeSideTab, setActiveSideTab] = useState('Must Haves');
+  const [dynamicCategories, setDynamicCategories] = useState([]);
+
   const dropdownRef = useRef(null);
   const router = useRouter();
   const { cart, wishlist } = useCart();
@@ -151,6 +49,14 @@ const Navbar = () => {
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', onScroll);
+
+    // Fetch dynamic categories
+    getCategories().then(res => {
+      if (res.categories && res.categories.length > 0) {
+        setDynamicCategories(res.categories);
+      }
+    });
+
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
@@ -189,15 +95,15 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-4">
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-          <div className="w-9 h-9 rounded-xl bg-medical-blue flex items-center justify-center text-white font-black text-lg shadow-premium">
+        <Link href="/" className="flex items-center gap-2.5 flex-shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-medical-blue to-blue-700 flex items-center justify-center text-white font-black text-xl shadow-premium">
             P
           </div>
           <div className="hidden sm:block">
-            <div className="font-black text-lg text-slate-900 leading-none tracking-tight">
+            <div className="font-black text-xl text-slate-900 leading-none tracking-tight">
               Paridhi <span className="text-medical-blue">Pharma</span>
             </div>
-            <div className="text-[9px] text-slate-500 font-semibold uppercase tracking-widest mt-0.5">
+            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">
               Medicines & Healthcare
             </div>
           </div>
@@ -211,17 +117,17 @@ const Navbar = () => {
         </button>
 
         {/* Search Bar */}
-        <form onSubmit={handleSearch} className="hidden md:flex items-center flex-1 relative min-w-0">
-          <div className="flex items-center w-full bg-slate-50 border-2 border-slate-200 rounded-2xl focus-within:border-medical-blue focus-within:bg-white transition-all duration-200 shadow-sm overflow-hidden">
-            <Search size={16} className="text-slate-400 ml-4 flex-shrink-0" />
+        <form onSubmit={handleSearch} className="hidden lg:flex items-center flex-1 relative min-w-0 max-w-2xl mx-6">
+          <div className="flex items-center w-full bg-slate-50 border-2 border-slate-200 rounded-2xl focus-within:border-medical-blue focus-within:bg-white focus-within:shadow-md transition-all duration-300 shadow-sm overflow-hidden group">
+            <Search size={18} className="text-slate-400 ml-4 flex-shrink-0 group-focus-within:text-medical-blue transition-colors" />
             <input
               type="text"
               placeholder='Search medicines, brands (e.g. "Crocin", "Cipla")…'
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-transparent py-2.5 px-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none"
+              className="w-full bg-transparent py-3 px-3 text-[14px] text-slate-800 placeholder-slate-400 focus:outline-none"
             />
-            <button type="submit" className="bg-medical-blue text-white font-bold px-5 py-2.5 text-sm hover:bg-blue-700 transition rounded-r-xl flex-shrink-0">
+            <button type="submit" className="bg-medical-blue text-white font-bold px-6 py-3 text-[14px] hover:bg-blue-700 transition flex-shrink-0">
               Search
             </button>
           </div>
@@ -282,34 +188,34 @@ const Navbar = () => {
       </div>
 
       {/* ── Category Nav Bar (PharmEasy-style) ── */}
-      <nav className="hidden md:block border-t border-slate-100 bg-white relative" ref={dropdownRef}>
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center gap-0">
+      <nav className="hidden md:block border-t border-slate-100 bg-white relative shadow-sm z-40" ref={dropdownRef}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex items-center gap-8 lg:gap-12 w-full overflow-x-auto no-scrollbar">
 
             {NAV_LINKS.map((link) => (
-              <div key={link.href} className="relative flex-shrink-0">
+              <div key={link.href} className="relative flex-shrink-0 group">
                 {link.mega === 'healthcare' ? (
                   // Healthcare with dropdown trigger
                   <button
                     onMouseEnter={() => { setActiveDropdown('healthcare'); }}
                     onClick={() => setActiveDropdown(activeDropdown === 'healthcare' ? null : 'healthcare')}
-                    className={`flex items-center gap-1.5 px-4 py-3 text-[13px] font-semibold border-b-2 transition-all duration-200 ${
+                    className={`flex items-center gap-2 px-4 py-3.5 text-[14px] font-bold border-b-[3px] transition-all duration-200 ${
                       activeDropdown === 'healthcare'
-                        ? 'text-medical-blue border-medical-blue'
-                        : 'text-slate-600 border-transparent hover:text-medical-blue hover:border-medical-blue'
+                        ? 'text-medical-blue border-medical-blue bg-blue-50/50'
+                        : 'text-slate-700 border-transparent hover:text-medical-blue hover:border-medical-blue hover:bg-slate-50'
                     }`}
                   >
-                    <span className="text-medical-blue">{link.icon}</span>
+                    <span className={`transition-colors ${activeDropdown === 'healthcare' ? 'text-medical-blue' : 'text-slate-400 group-hover:text-medical-blue'}`}>{link.icon}</span>
                     {link.label}
-                    <ChevronDown size={12} className={`transition-transform duration-200 ${activeDropdown === 'healthcare' ? 'rotate-180' : ''}`} />
+                    <ChevronDown size={14} className={`transition-transform duration-200 ${activeDropdown === 'healthcare' ? 'rotate-180' : ''}`} />
                   </button>
                 ) : (
                   <Link href={link.href}
                     onMouseEnter={() => setActiveDropdown(null)}
-                    className="flex items-center gap-1.5 px-4 py-3 text-[13px] font-semibold text-slate-600 hover:text-medical-blue border-b-2 border-transparent hover:border-medical-blue transition-all duration-200"
+                    className="flex items-center gap-2 px-4 py-3.5 text-[14px] font-bold text-slate-700 hover:text-medical-blue border-b-[3px] border-transparent hover:border-medical-blue hover:bg-slate-50 transition-all duration-200"
                   >
-                    {link.dot && <span className="w-1.5 h-1.5 bg-red-500 rounded-full flex-shrink-0 animate-pulse" />}
-                    <span className="text-medical-blue opacity-80">{link.icon}</span>
+                    {link.dot && <span className="w-2 h-2 bg-red-500 rounded-full flex-shrink-0 animate-pulse" />}
+                    <span className="text-slate-400 group-hover:text-medical-blue transition-colors">{link.icon}</span>
                     {link.label}
                   </Link>
                 )}
@@ -321,55 +227,33 @@ const Navbar = () => {
         {/* ── Healthcare Mega Dropdown (PharmEasy-style) ── */}
         {activeDropdown === 'healthcare' && (
           <div
-            className="absolute left-0 right-0 top-full z-[9999] bg-white border border-slate-200 shadow-[0_24px_64px_-12px_rgba(0,0,0,0.18)] rounded-b-2xl overflow-hidden"
+            className="absolute left-0 right-0 top-full z-[9999] bg-white border-b border-slate-200 shadow-xl overflow-hidden"
             style={{ animation: 'fadeSlideDown 0.18s ease' }}
             onMouseLeave={() => setActiveDropdown(null)}
           >
-            <div className="max-w-7xl mx-auto flex">
-
-              {/* Left Sidebar */}
-              <div className="w-52 flex-shrink-0 bg-slate-50 border-r border-slate-100 overflow-y-auto py-2">
-                {SIDEBAR_CATEGORIES.map((cat) => (
-                  <button
-                    key={cat}
-                    onMouseEnter={() => setActiveSideTab(cat)}
-                    onClick={() => setActiveSideTab(cat)}
-                    className={`w-full text-left px-4 py-2.5 text-[13px] transition-all duration-100 flex items-center justify-between ${
-                      activeSideTab === cat
-                        ? 'bg-white font-semibold text-slate-900 border-r-2 border-medical-blue'
-                        : 'text-slate-600 hover:bg-white hover:text-slate-900'
-                    }`}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+              <div className="flex justify-between items-center mb-5 border-b border-slate-100 pb-3">
+                <h3 className="font-black text-lg text-slate-800">Healthcare Categories</h3>
+                <Link href="/shop?category=wellness" onClick={() => setActiveDropdown(null)} className="text-xs font-bold text-medical-blue hover:underline">
+                  View All Healthcare
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                {dynamicCategories.map((cat) => (
+                  <Link
+                    key={cat.id}
+                    href={`/shop?category=${cat.id}`}
+                    onClick={() => setActiveDropdown(null)}
+                    className="flex items-center gap-3.5 px-4 py-3.5 bg-white border border-slate-200 rounded-xl hover:bg-blue-50 hover:border-medical-blue transition-all group shadow-sm hover:shadow-md"
                   >
-                    {cat}
-                    {activeSideTab === cat && <span className="text-medical-blue">›</span>}
-                  </button>
+                    <span className="text-2xl group-hover:scale-110 transition-transform">{cat.icon}</span>
+                    <div>
+                       <div className="font-bold text-[13px] text-slate-800 group-hover:text-medical-blue transition-colors">{cat.name}</div>
+                       <div className="text-[10px] text-slate-500 font-medium mt-0.5">Explore Products ›</div>
+                    </div>
+                  </Link>
                 ))}
               </div>
-
-              {/* Right: Sub-category grid */}
-              <div className="flex-1 px-8 py-5">
-                <div className="grid gap-x-8 gap-y-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))' }}>
-                  {(HEALTHCARE_SUBMENU[activeSideTab] || []).map((item) => (
-                    <div key={item.title}>
-                      <Link
-                        href={item.href}
-                        onClick={() => setActiveDropdown(null)}
-                        className="block font-bold text-[13px] text-slate-800 hover:text-medical-blue transition mb-1"
-                      >
-                        {item.title}
-                      </Link>
-                      <Link
-                        href={item.href}
-                        onClick={() => setActiveDropdown(null)}
-                        className="block text-xs text-slate-400 hover:text-medical-blue transition"
-                      >
-                        {item.sub}
-                      </Link>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
             </div>
           </div>
         )}
@@ -403,11 +287,12 @@ const Navbar = () => {
           <div className="border-t border-slate-100 pt-3">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-2">Healthcare Categories</p>
             <div className="grid grid-cols-2 gap-1.5">
-              {SIDEBAR_CATEGORIES.slice(0, 8).map((cat) => (
-                <Link key={cat} href={`/shop?search=${encodeURIComponent(cat)}`}
+              {dynamicCategories.slice(0, 8).map((cat) => (
+                <Link key={cat.id} href={`/shop?category=${cat.id}`}
                   onClick={() => setMobileMenu(false)}
-                  className="px-3 py-2 bg-slate-50 rounded-lg text-xs text-slate-700 hover:text-medical-blue font-medium truncate">
-                  {cat}
+                  className="px-3 py-2 bg-slate-50 rounded-lg text-xs text-slate-700 hover:text-medical-blue font-medium truncate flex items-center gap-1.5">
+                  <span className="text-sm opacity-80">{cat.icon}</span>
+                  {cat.name}
                 </Link>
               ))}
             </div>

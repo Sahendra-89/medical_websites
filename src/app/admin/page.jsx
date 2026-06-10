@@ -2,16 +2,56 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Package, Users, DollarSign, FileText, CheckCircle, AlertCircle, RefreshCw, UploadCloud, TrendingUp, ShieldCheck, Plus } from 'lucide-react';
+import {
+  Package, DollarSign, FileText, AlertCircle, TrendingUp, ShieldCheck, FileCode
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { getAdminStats } from '../../lib/api';
+import {
+  getAdminStats, getBlogPosts, createBlogPost, deleteBlogPost,
+  getCoupons, createCoupon, deleteCoupon
+} from '../../lib/api';
+
+// Import modular tab components
+import OverviewTab from '../../components/admin/OverviewTab';
+import ProductTab from '../../components/admin/ProductTab';
+import OrderTab from '../../components/admin/OrderTab';
+import PrescriptionTab from '../../components/admin/PrescriptionTab';
+import InventoryTab from '../../components/admin/InventoryTab';
+import ContentTab from '../../components/admin/ContentTab';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview'); // overview, products, orders, prescriptions, inventory
+  const [activeTab, setActiveTab] = useState('overview'); // overview, products, orders, prescriptions, inventory, content
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Content Management states
+  const [contentSubTab, setContentSubTab] = useState('blogs'); // blogs, coupons
+  const [blogs, setBlogs] = useState([]);
+  const [coupons, setCoupons] = useState([]);
+  const [contentLoading, setContentLoading] = useState(false);
+  const [contentSuccess, setContentSuccess] = useState('');
+
+  // New Blog form state
+  const [newBlog, setNewBlog] = useState({
+    title: '',
+    category: 'Medicine Education',
+    author: 'Harsh(B.Pharm)',
+    excerpt: '',
+    content: '',
+    image: '',
+    readTime: ''
+  });
+
+  // New Coupon form state
+  const [newCoupon, setNewCoupon] = useState({
+    code: '',
+    type: 'percent',
+    discount_value: '',
+    min_order_value: '',
+    max_discount: ''
+  });
 
   // Bulk Upload state
   const [bulkFile, setBulkFile] = useState(null);
@@ -54,6 +94,19 @@ export default function AdminDashboardPage() {
         }
       };
       fetchStats();
+
+      // Load blogs and coupons for Content Management
+      const loadContentData = async () => {
+        try {
+          const blogsRes = await getBlogPosts();
+          if (blogsRes.blogs) setBlogs(blogsRes.blogs);
+          const couponsRes = await getCoupons();
+          if (couponsRes.coupons) setCoupons(couponsRes.coupons);
+        } catch (err) {
+          console.error('Error loading content dashboard data:', err);
+        }
+      };
+      loadContentData();
     }
   }, [user]);
 
@@ -73,6 +126,98 @@ export default function AdminDashboardPage() {
       setInventory([...inventory, { id: Date.now(), name: 'Strepsils Lozenges (Bulk Add)', brand: 'Reckitt', category: 'otc', stock: 500, price: 51.52, sku: 'PP-OTC-BULK' }]);
       setTimeout(() => setBulkSuccess(''), 4000);
     }, 2000);
+  };
+
+  const handleCreateBlog = async (e) => {
+    e.preventDefault();
+    if (!newBlog.title || !newBlog.content || !newBlog.excerpt) {
+      alert('Please fill out all required blog fields.');
+      return;
+    }
+    setContentLoading(true);
+    try {
+      const res = await createBlogPost(newBlog);
+      if (res.success) {
+        setContentSuccess('Blog article published successfully!');
+        setBlogs([res.blog, ...blogs]);
+        // Reset form
+        setNewBlog({
+          title: '',
+          category: 'Medicine Education',
+          author: 'Dr. S. K. Sharma (B.Pharm)',
+          excerpt: '',
+          content: '',
+          image: '',
+          readTime: ''
+        });
+        setTimeout(() => setContentSuccess(''), 4000);
+      }
+    } catch (err) {
+      alert('Failed to publish blog post.');
+    } finally {
+      setContentLoading(false);
+    }
+  };
+
+  const handleDeleteBlog = async (id) => {
+    if (!confirm('Are you sure you want to delete this article?')) return;
+    try {
+      const res = await deleteBlogPost(id);
+      if (res.success) {
+        setBlogs(blogs.filter(b => b.id !== id));
+        setContentSuccess('Blog article removed.');
+        setTimeout(() => setContentSuccess(''), 3000);
+      }
+    } catch (err) {
+      alert('Failed to delete blog post.');
+    }
+  };
+
+  const handleCreateCoupon = async (e) => {
+    e.preventDefault();
+    if (!newCoupon.code || !newCoupon.discount_value || !newCoupon.min_order_value) {
+      alert('Please fill out all required coupon fields.');
+      return;
+    }
+    setContentLoading(true);
+    try {
+      const res = await createCoupon({
+        ...newCoupon,
+        discount_value: parseFloat(newCoupon.discount_value),
+        min_order_value: parseFloat(newCoupon.min_order_value),
+        max_discount: newCoupon.max_discount ? parseFloat(newCoupon.max_discount) : null
+      });
+      if (res.success) {
+        setContentSuccess('New coupon code created successfully!');
+        setCoupons([res.coupon, ...coupons]);
+        setNewCoupon({
+          code: '',
+          type: 'percent',
+          discount_value: '',
+          min_order_value: '',
+          max_discount: ''
+        });
+        setTimeout(() => setContentSuccess(''), 4000);
+      }
+    } catch (err) {
+      alert('Failed to create coupon.');
+    } finally {
+      setContentLoading(false);
+    }
+  };
+
+  const handleDeleteCoupon = async (code) => {
+    if (!confirm(`Are you sure you want to delete coupon code "${code}"?`)) return;
+    try {
+      const res = await deleteCoupon(code);
+      if (res.success) {
+        setCoupons(coupons.filter(c => c.code !== code));
+        setContentSuccess('Coupon code deleted.');
+        setTimeout(() => setContentSuccess(''), 3000);
+      }
+    } catch (err) {
+      alert('Failed to delete coupon.');
+    }
   };
 
   const handleApproveRx = (id, status) => {
@@ -122,7 +267,8 @@ export default function AdminDashboardPage() {
           { id: 'products', label: 'Product Management', icon: <Package size={16} /> },
           { id: 'orders', label: 'Order Management', icon: <DollarSign size={16} /> },
           { id: 'prescriptions', label: 'Prescription Approval', icon: <FileText size={16} /> },
-          { id: 'inventory', label: 'Inventory Tracking', icon: <AlertCircle size={16} /> }
+          { id: 'inventory', label: 'Inventory Tracking', icon: <AlertCircle size={16} /> },
+          { id: 'content', label: 'Content Management', icon: <FileCode size={16} /> }
         ].map(tab => (
           <button
             key={tab.id}
@@ -136,253 +282,49 @@ export default function AdminDashboardPage() {
 
       {/* Tab Content */}
       <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-card">
-        {/* 1. Overview Tab */}
         {activeTab === 'overview' && (
-          <div className="space-y-8">
-            <h2 className="text-xl font-bold text-slate-900 border-b border-slate-100 pb-4">Business Dashboard Overview</h2>
-
-            {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[1, 2, 3, 4].map(n => <div key={n} className="h-32 bg-slate-100 animate-pulse rounded-2xl"></div>)}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
-                  <div>
-                    <span className="text-xs text-slate-500 font-bold">Total Revenue (Monthly)</span>
-                    <h3 className="text-2xl font-black text-slate-900 mt-1">₹{stats?.totalRevenue ? stats.totalRevenue.toLocaleString() : '3,45,600'}</h3>
-                    <span className="text-[10px] text-green-600 font-bold flex items-center gap-0.5 mt-1"><TrendingUp size={12} /> +18.4% this month</span>
-                  </div>
-                  <div className="w-12 h-12 rounded-xl bg-blue-100 text-medical-blue flex items-center justify-center"><DollarSign size={24} /></div>
-                </div>
-
-                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
-                  <div>
-                    <span className="text-xs text-slate-500 font-bold">Total Orders</span>
-                    <h3 className="text-2xl font-black text-slate-900 mt-1">{stats?.totalOrders || 42}</h3>
-                    <span className="text-[10px] text-slate-400 mt-1 block">Gurgaon & Delhi NCR</span>
-                  </div>
-                  <div className="w-12 h-12 rounded-xl bg-green-100 text-green-600 flex items-center justify-center"><Package size={24} /></div>
-                </div>
-
-                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
-                  <div>
-                    <span className="text-xs text-slate-500 font-bold">Pending Prescriptions</span>
-                    <h3 className="text-2xl font-black text-amber-600 mt-1">{stats?.pendingPrescriptions || 3}</h3>
-                    <span className="text-[10px] text-amber-600 font-bold mt-1 block">Verification Required</span>
-                  </div>
-                  <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center"><FileText size={24} /></div>
-                </div>
-
-                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
-                  <div>
-                    <span className="text-xs text-slate-500 font-bold">Registered Users</span>
-                    <h3 className="text-2xl font-black text-slate-900 mt-1">{stats?.totalUsers || 24}</h3>
-                    <span className="text-[10px] text-slate-400 mt-1 block">B2C Retail + B2B Buyers</span>
-                  </div>
-                  <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center"><Users size={24} /></div>
-                </div>
-              </div>
-            )}
-
-            {/* Quick Actions & Alerts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-6 border-t border-slate-100">
-              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6 flex flex-col justify-between">
-                <div>
-                  <h4 className="font-bold text-sm text-medical-blue flex items-center gap-2 mb-2"><UploadCloud size={18} /> Bulk Product Management</h4>
-                  <p className="text-xs text-slate-600 leading-relaxed mb-6">Need to update inventory or add new medicines? Upload your Excel or CSV catalog to instantly synchronize products, prices, and stock.</p>
-                </div>
-                <button onClick={() => setActiveTab('products')} className="bg-medical-blue text-white font-bold px-6 py-3 rounded-xl text-xs shadow-md hover:bg-blue-600 transition self-start">
-                  Go to Bulk Upload Panel
-                </button>
-              </div>
-
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 flex flex-col justify-between">
-                <div>
-                  <h4 className="font-bold text-sm text-amber-900 flex items-center gap-2 mb-2"><AlertCircle size={18} /> Low Stock Alerts</h4>
-                  <p className="text-xs text-amber-800 leading-relaxed mb-6">Certain fast-moving medicines and medical devices are running below the minimum threshold of 20 units. Restock to avoid losing sales.</p>
-                </div>
-                <button onClick={() => setActiveTab('inventory')} className="bg-amber-600 text-white font-bold px-6 py-3 rounded-xl text-xs shadow-md hover:bg-amber-700 transition self-start">
-                  Review Low Stock Inventory
-                </button>
-              </div>
-            </div>
-          </div>
+          <OverviewTab stats={stats} loading={loading} setActiveTab={setActiveTab} />
         )}
 
-        {/* 2. Product Management Tab */}
         {activeTab === 'products' && (
-          <div className="space-y-8">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-4">
-              <h2 className="text-xl font-bold text-slate-900">Product Catalog Management</h2>
-              <button onClick={() => alert('Mock add single product modal opened')} className="bg-medical-blue text-white font-bold px-4 py-2 rounded-xl text-xs shadow-md hover:bg-blue-600 transition flex items-center gap-1.5">
-                <Plus size={16} /> Add Single Product
-              </button>
-            </div>
-
-            {/* Bulk Upload Section */}
-            <div className="bg-slate-50 border border-slate-200 rounded-3xl p-8 max-w-2xl">
-              <h3 className="font-bold text-sm text-slate-900 mb-2 flex items-center gap-2"><UploadCloud size={18} className="text-medical-blue" /> Bulk Upload via Excel / CSV</h3>
-              <p className="text-xs text-slate-500 mb-6 leading-relaxed">Select your inventory spreadsheet. The system will match columns for Name, Brand, Category, MRP, Price, Stock, and SKU.</p>
-
-              {bulkSuccess && (
-                <div className="bg-green-50 border border-green-200 text-green-700 text-xs p-4 rounded-2xl mb-6 font-bold flex items-center gap-2">
-                  <CheckCircle size={18} /> {bulkSuccess}
-                </div>
-              )}
-
-              <form onSubmit={handleBulkUpload} className="space-y-4">
-                <input
-                  type="file"
-                  accept=".csv, .xlsx, .xls"
-                  required
-                  onChange={(e) => setBulkFile(e.target.files[0])}
-                  className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs focus:outline-none focus:border-medical-blue"
-                />
-
-                <div className="flex items-center gap-4 pt-2">
-                  <button type="submit" disabled={uploadingBulk} className="bg-medical-blue hover:bg-blue-600 text-white font-bold px-8 py-3 rounded-xl text-xs transition shadow-md flex items-center gap-2">
-                    {uploadingBulk ? 'Uploading & Syncing...' : 'Upload & Synchronize Catalog'}
-                  </button>
-                  <a href="#sample" onClick={() => alert('Sample Excel template downloaded')} className="text-xs text-medical-blue hover:underline font-semibold">Download Sample Template</a>
-                </div>
-              </form>
-            </div>
-          </div>
+          <ProductTab
+            bulkFile={bulkFile}
+            setBulkFile={setBulkFile}
+            uploadingBulk={uploadingBulk}
+            bulkSuccess={bulkSuccess}
+            handleBulkUpload={handleBulkUpload}
+          />
         )}
 
-        {/* 3. Orders Management Tab */}
         {activeTab === 'orders' && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-bold text-slate-900 border-b border-slate-100 pb-4">Customer Order Management</h2>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
-                    <th className="p-4">Order ID</th>
-                    <th className="p-4">Customer</th>
-                    <th className="p-4">Items Summary</th>
-                    <th className="p-4">Total</th>
-                    <th className="p-4">Payment</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {orders.map(o => (
-                    <tr key={o.id} className="hover:bg-slate-50 transition">
-                      <td className="p-4 font-bold text-slate-900">{o.id}</td>
-                      <td className="p-4 text-slate-700">{o.customer}</td>
-                      <td className="p-4 text-slate-600 max-w-xs truncate">{o.items}</td>
-                      <td className="p-4 font-black text-medical-blue">₹{o.total.toFixed(2)}</td>
-                      <td className="p-4"><span className="bg-slate-200 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded">{o.payment}</span></td>
-                      <td className="p-4">
-                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full capitalize ${
-                          o.status === 'delivered' ? 'bg-green-100 text-green-800' : o.status === 'shipped' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'
-                        }`}>
-                          {o.status}
-                        </span>
-                      </td>
-                      <td className="p-4 text-right space-x-2">
-                        {o.status === 'confirmed' && (
-                          <button onClick={() => handleUpdateOrderStatus(o.id, 'shipped')} className="bg-blue-100 hover:bg-blue-200 text-medical-blue font-bold px-3 py-1 rounded-lg text-[10px] transition">Mark Shipped</button>
-                        )}
-                        {o.status === 'shipped' && (
-                          <button onClick={() => handleUpdateOrderStatus(o.id, 'delivered')} className="bg-green-100 hover:bg-green-200 text-green-700 font-bold px-3 py-1 rounded-lg text-[10px] transition">Mark Delivered</button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <OrderTab orders={orders} handleUpdateOrderStatus={handleUpdateOrderStatus} />
         )}
 
-        {/* 4. Prescription Approval Tab */}
         {activeTab === 'prescriptions' && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-bold text-slate-900 border-b border-slate-100 pb-4">Pharmacist Prescription Approval Panel</h2>
-
-            <div className="space-y-6">
-              {prescriptions.map(rx => (
-                <div key={rx.id} className="bg-slate-50 rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-                  <div className="flex items-center gap-4">
-                    <img src={rx.file_url} alt="Rx" className="w-20 h-20 object-cover rounded-xl border border-slate-200 shrink-0" />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-sm text-slate-900">Prescription #{rx.id}</h4>
-                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full capitalize ${rx.status === 'approved' ? 'bg-green-100 text-green-800' : rx.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'}`}>{rx.status}</span>
-                      </div>
-                      <p className="text-xs text-slate-500 mt-1">Patient: {rx.patient_name} | Doctor: {rx.doctor_name}</p>
-                      <p className="text-xs text-slate-600 italic mt-1 max-w-sm">Notes: "{rx.notes}"</p>
-                    </div>
-                  </div>
-
-                  {rx.status === 'pending' && (
-                    <div className="flex items-center gap-3 border-t sm:border-t-0 pt-4 sm:pt-0 border-slate-200 w-full sm:w-auto justify-end">
-                      <button onClick={() => handleApproveRx(rx.id, 'rejected')} className="bg-red-50 hover:bg-red-100 text-red-600 font-bold px-4 py-2 rounded-xl text-xs transition border border-red-200">Reject</button>
-                      <button onClick={() => handleApproveRx(rx.id, 'approved')} className="bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-2 rounded-xl text-xs transition shadow-md flex items-center gap-1"><CheckCircle size={14} /> Verify & Approve</button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
+          <PrescriptionTab prescriptions={prescriptions} handleApproveRx={handleApproveRx} />
         )}
 
-        {/* 5. Inventory Tracking Tab */}
         {activeTab === 'inventory' && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-bold text-slate-900 border-b border-slate-100 pb-4">Inventory & Stock Tracking</h2>
+          <InventoryTab inventory={inventory} setInventory={setInventory} />
+        )}
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
-                    <th className="p-4">SKU</th>
-                    <th className="p-4">Product Name</th>
-                    <th className="p-4">Brand</th>
-                    <th className="p-4">Category</th>
-                    <th className="p-4">Price</th>
-                    <th className="p-4">Stock Status</th>
-                    <th className="p-4 text-right">Quick Restock</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {inventory.map(item => (
-                    <tr key={item.id} className="hover:bg-slate-50 transition">
-                      <td className="p-4 font-mono text-slate-500">{item.sku}</td>
-                      <td className="p-4 font-bold text-slate-900">{item.name}</td>
-                      <td className="p-4 text-slate-700">{item.brand}</td>
-                      <td className="p-4 text-slate-500 uppercase">{item.category}</td>
-                      <td className="p-4 font-black text-slate-900">₹{item.price.toFixed(2)}</td>
-                      <td className="p-4">
-                        {item.stock < 20 ? (
-                          <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-1 rounded-full">
-                            <AlertCircle size={12} /> Low Stock ({item.stock})
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 text-[10px] font-bold px-2.5 py-1 rounded-full">
-                            <CheckCircle size={12} /> Healthy ({item.stock})
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-4 text-right">
-                        <button onClick={() => {
-                          setInventory(inventory.map(i => i.id === item.id ? { ...i, stock: i.stock + 100 } : i));
-                          alert(`Restocked +100 units for ${item.name}`);
-                        }} className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-xl text-[10px] transition">
-                          +100 Units
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        {activeTab === 'content' && (
+          <ContentTab
+            blogs={blogs}
+            coupons={coupons}
+            contentSubTab={contentSubTab}
+            setContentSubTab={setContentSubTab}
+            contentSuccess={contentSuccess}
+            newBlog={newBlog}
+            setNewBlog={setNewBlog}
+            newCoupon={newCoupon}
+            setNewCoupon={setNewCoupon}
+            contentLoading={contentLoading}
+            handleCreateBlog={handleCreateBlog}
+            handleDeleteBlog={handleDeleteBlog}
+            handleCreateCoupon={handleCreateCoupon}
+            handleDeleteCoupon={handleDeleteCoupon}
+          />
         )}
       </div>
     </div>

@@ -41,7 +41,7 @@ export default function LicensePage() {
               </div>
               <div>
                 <span className="text-slate-400 block mb-1">Pharmacist-in-Charge:</span>
-                <span className="font-bold text-slate-900 text-sm">Sahendra Yadav (B.Pharm, Reg No: 45892)</span>
+                <span className="font-bold text-slate-900 text-sm">Harsh (B.Pharm, Reg No: 45892)</span>
               </div>
             </div>
           </div>

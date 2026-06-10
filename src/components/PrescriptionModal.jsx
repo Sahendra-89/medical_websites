@@ -88,7 +88,7 @@ const PrescriptionModal = ({ isOpen, onClose, onSuccess }) => {
                   <label className="block text-xs font-bold text-slate-700 mb-1">Doctor Name (Optional)</label>
                   <input
                     type="text"
-                    placeholder="e.g., Dr. Sahendra Yadav"
+                    placeholder="e.g., Dr. Harsh"
                     value={doctorName}
                     onChange={(e) => setDoctorName(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-medical-blue focus:bg-white transition"
